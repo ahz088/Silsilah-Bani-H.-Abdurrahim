@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Silsilah Keluarga Besar - Edisi Ramadhan</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="data.js"></script>
+    
+    <style>
+        :root {
+            --rmd-green-dark: #1e5631;
+            --rmd-green-mid: #2d6a4f;
+            --rmd-gold: #e9b33a;
+            --rmd-cream: #fdfaf1;
+            --box-bg: #ffffff;
+            --text-main: #1e5631;
+            --line-color: #e9b33a;
+        }
+
+        body.dark-theme {
+            --rmd-green-dark: #a4be7c;
+            --rmd-gold: #f4d35e;
+            --rmd-cream: #0b132b;
+            --box-bg: #1c2541;
+            --text-main: #f4d35e;
+            --line-color: #f4d35e;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--rmd-cream);
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background 0.5s ease;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .spinning {
+            animation: spin 3s linear infinite;
+            border-color: var(--rmd-green-dark) !important;
+            background: var(--rmd-gold) !important;
+        }
+
+        #welcome-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1e5631, #2d6a4f);
+            z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white; text-align: center; padding: 20px;
+        }
+
+        #typewriter-text { font-size: 1.1rem; max-width: 600px; min-height: 5em; margin-bottom: 30px; }
+
+        .btn-start {
+            font-size: 1rem; font-weight: bold; background: var(--rmd-gold);
+            color: #1e5631; padding: 12px 30px; border-radius: 30px;
+            cursor: pointer; display: none; border: none; animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        header {
+            position: fixed; top: 0; width: 100%; z-index: 1100; 
+            background: rgba(255,255,255,0.95); border-bottom: 5px solid var(--rmd-gold);
+            padding: 15px 0; text-align: center; backdrop-filter: blur(10px);
+        }
+
+        .header-profile {
+            position: absolute; left: 20px; top: 15px; display: flex; align-items: center; gap: 10px;
+        }
+        .profile-img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--rmd-gold); object-fit: cover; }
+        
+        .btn-view-img {
+            display: inline-block;
+            margin-top: 3px;
+            padding: 2px 8px;
+            background: var(--rmd-green-dark);
+            color: white;
+            font-size: 0.55rem;
+            border-radius: 4px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* --- STYLE UNTUK POP-UP (MODAL) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 5000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            position: relative; max-width: 90%; max-height: 90%;
+            background: white; padding: 10px; border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .modal-content img { max-width: 100%; max-height: 70vh; border-radius: 5px; }
+        .btn-close-modal {
+            margin-top: 10px; padding: 8px 20px;
+            background: #f44336; color: white; border: none;
+            border-radius: 5px; font-weight: bold; cursor: pointer;
+        }
+
+        .search-container {
+            position: absolute; right: 20px; top: 22px; background: white;
+            border: 2px solid var(--rmd-gold); border-radius: 20px; padding: 5px 15px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .search-input { border: none; outline: none; width: 120px; font-size: 0.8rem; }
+
+        .tab-container { 
+            position: fixed; top: 130px; left: 50%; transform: translateX(-50%); 
+            display: flex; gap: 10px; z-index: 1050; 
+        }
+        .tab-btn { padding: 8px 18px; border: 2px solid var(--rmd-gold); background: white; border-radius: 20px; cursor: pointer; font-weight: bold; color: var(--rmd-green-dark); }
+        .tab-btn.active { background: var(--rmd-green-dark); color: white; }
+
+        .viewport { 
+            width: 100vw; 
+            height: 100vh; 
+            overflow: auto; 
+            padding-top: 250px;
+            box-sizing: border-box;
+        }
+        
+        #zoom-container { 
+            transform-origin: top left; 
+            padding: 0 50px 500px 50px; 
+            display: inline-block; 
+            transition: transform 0.2s ease;
+        }
+        
+        .person { 
+            background: var(--box-bg); border: 2px solid var(--rmd-green-dark); 
+            padding: 15px; border-radius: 12px; min-width: 170px; 
+            text-align: center; box-shadow: 5px 5px 0px var(--rmd-gold); 
+            transition: all 0.3s ease;
+        }
+
+        .child-row { 
+            display: flex; align-items: flex-start; margin-bottom: 60px; position: relative; padding-left: 60px; 
+        }
+        .child-row::before { content: ''; position: absolute; left: 25px; top: -100px; width: 4px; height: calc(100% + 100px); background: var(--line-color); }
+        .child-row::after { content: ''; position: absolute; left: 25px; top: 32px; width: 35px; height: 4px; background: var(--line-color); }
+
+        .name-txt { font-weight: 800; color: var(--text-main); text-transform: uppercase; font-size: 1rem; }
+        .desc-txt { font-size: 0.7rem; color: #666; font-style: italic; }
+
+        .controls { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2000; }
+        .btn-ctrl { width: 50px; height: 50px; border-radius: 50%; border: 3px solid var(--rmd-gold); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.3s; }
+
+        .highlight-found {
+            background-color: #ffeb3b !important;
+            box-shadow: 0 0 30px #e9b33a !important;
+            transform: scale(1.15) !important;
+            border-color: #f44336 !important;
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            .header-profile { position: static; margin-bottom: 10px; justify-content: center; }
+            .search-container { position: fixed; bottom: 85px; right: 20px; width: 140px; z-index: 2000; }
+            header h1 { font-size: 1.1rem !important; }
+            .viewport { padding-top: 300px; }
+            .controls { flex-direction: row; left: 20px; right: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="imageModal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin-top:0; color:var(--rmd-green-dark)">Foto Keluarga</h3>
+            <img src="Foto keluarga.jpg" alt="Admin Keluarga" onerror="this.src='https://via.placeholder.com/300'">
+            <button class="btn-close-modal" onclick="closeModal()">TUTUP</button>
+        </div>
+    </div>
+
+    <div id="welcome-overlay">
+        <div id="typewriter-text"></div>
+        <button id="skip-btn" class="btn-start" onclick="closeWelcome()">MULAI JELAJAHI &raquo;</button>
+    </div>
+
+    <audio id="ramadhanSong" loop>
+        <source src="Ya Maulana.mp3" type="audio/mpeg">
+    </audio>
+
+    <header>
+        <div class="header-profile">
+            <img src="Foto keluarga.jpg" class="profile-img" onerror="this.src='https://via.placeholder.com/100'">
+            <div style="text-align:left;">
+                <h4 style="margin:0; font-size:0.8rem; color: var(--rmd-green-dark);">Admin Keluarga</h4>
+                <p style="margin:0; font-size:0.6rem; color:#666;">Ahza Aqila Hammadi</p>
+                <button class="btn-view-img" onclick="openModal()">Lihat Gambar</button>
+            </div>
+        </div>
+        <h1 style="margin:0; color: var(--rmd-green-dark); font-size: 1.4rem;">🌙 SILSILAH KELUARGA</h1>
+        <p style="margin:5px 0; color: var(--rmd-gold); font-weight: 900; font-size: 0.8rem;">H. ABDURRAHIM & HJ. ROKMAH</p>
+        
+        <div class="search-container">
+            <span>🔍</span>
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari nama...">
+        </div>
+    </header>
+
+    <div class="tab-container">
+        <button id="btn1" class="tab-btn active" onclick="switchPage(1)">ANAK 1-6</button>
+        <button id="btn2" class="tab-btn" onclick="switchPage(2)">ANAK 7-10</button>
+    </div>
+
+    <div class="viewport" id="mainViewport">
+        <div id="zoom-container">
+            <div class="leluhur-wrapper">
+                <div class="person" style="border: 4px solid var(--rmd-gold); width: 280px;">
+                    <div class="name-txt" style="font-size: 1.2rem;">H. Abdurrahim & Hj. Rokmah</div>
+                    <div class="desc-txt">Leluhur Utama (Generasi 1)</div>
+                </div>
+            </div>
+
+            <div id="page1" class="page-content"><div id="list-anak-1"></div></div>
+            <div id="page2" class="page-content" style="display:none;"><div id="list-anak-2"></div></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="musicToggle" class="btn-ctrl" onclick="toggleMusic()">🎵</button>
+        <button class="btn-ctrl" onclick="adjustZoom(0.1)">+</button>
+        <button class="btn-ctrl" onclick="adjustZoom(-0.1)">-</button>
+        <button class="btn-ctrl" onclick="toggleTheme()">🕌</button>
+    </div>
+
+    <script>
+        let scale = 0.7;
+        let textIndex = 0;
+        const welcomeText = "Selamat datang di website silsilah bani H. Abdurrahim yang dibuat oleh Ahza Aqila Hammadi, remaja asal Karawang, anak dari Kusmawati, Cucu dari Mih Atoh.";
+
+        // --- FUNGSI MODAL ---
+        function openModal() {
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function typeWriter() {
+            if (textIndex < welcomeText.length) {
+                document.getElementById("typewriter-text").innerHTML += welcomeText.charAt(textIndex);
+                textIndex++;
+                setTimeout(typeWriter, 35);
+            } else {
+                document.getElementById("skip-btn").style.display = "block";
+            }
+        }
+
+        function closeWelcome() {
+            const s = document.getElementById('ramadhanSong');
+            const btn = document.getElementById('musicToggle');
+            s.play().then(() => { btn.classList.add('spinning'); }).catch(() => {});
+            document.getElementById('welcome-overlay').style.display = "none";
+        }
+
+        function toggleMusic() {
+            const s = document.getElementById('ramadhanSong');
+            const btn = document.getElementById('musicToggle');
+            if (s.paused) { s.play(); btn.classList.add('spinning'); } 
+            else { s.pause(); btn.classList.remove('spinning'); }
+        }
+
+        function toggleTheme() { document.body.classList.toggle('dark-theme'); }
+
+        function switchPage(p) {
+            document.getElementById('page1').style.display = (p === 1) ? 'block' : 'none';
+            document.getElementById('page2').style.display = (p === 2) ? 'block' : 'none';
+            document.getElementById('btn1').classList.toggle('active', p === 1);
+            document.getElementById('btn2').classList.toggle('active', p === 2);
+        }
+
+        function adjustZoom(amt) {
+            scale = Math.min(Math.max(0.3, scale + amt), 1.2);
+            document.getElementById('zoom-container').style.transform = `scale(${scale})`;
+        }
+
+        function initSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                const allPersons = document.querySelectorAll('.person');
+                allPersons.forEach(p => p.classList.remove('highlight-found'));
+
+                if (query.length >= 2) {
+                    for (let p of allPersons) {
+                        const name = p.innerText.toLowerCase();
+                        if (name.includes(query)) {
+                            const isPage1 = p.closest('#page1');
+                            const isPage2 = p.closest('#page2');
+
+                            if (isPage1) switchPage(1);
+                            if (isPage2) switchPage(2);
+
+                            setTimeout(() => {
+                                p.classList.add('highlight-found');
+                                p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 150);
+                            break; 
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderList(data, targetId) {
+            const container = document.getElementById(targetId);
+            container.innerHTML = "";
+            data.forEach(anak => {
+                const row = document.createElement('div');
+                row.className = 'child-row';
+                row.innerHTML = `
+                    <div class="person">
+                        <div class="name-txt">${anak.nama}</div>
+                        <div class="desc-txt">${anak.keterangan || ''}</div>
+                    </div>
+                    <div style="display:flex; margin-left:40px;">
+                        ${anak.cucu ? renderCucu(anak.cucu) : ''}
+                    </div>`;
+                container.appendChild(row);
+            });
+        }
+
+        function renderCucu(cucuList) {
+            return cucuList.map(cucu => `
+                <div style="display:flex; flex-direction:column; align-items:center; margin-right:40px;">
+                    <div class="person" style="min-width:140px;">
+                        <div class="name-txt" style="font-size:0.8rem;">${cucu.nama}</div>
+                    </div>
+                    <div style="display:flex; gap:12px; margin-top:20px; border-top:2px solid var(--line-color); padding-top:10px;">
+                        ${cucu.cicit ? cucu.cicit.map(cc => `
+                            <div class="person" style="min-width:80px; font-size:0.65rem; padding:8px;">
+                                <div class="name-txt" style="font-size:0.65rem;">${cc.nama}</div>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                </div>`).join('');
+        }
+
+        window.onload = () => {
+            typeWriter();
+            if (typeof FAMILY_DATA !== 'undefined') {
+                renderList(FAMILY_DATA.slice(0, 6), 'list-anak-1');
+                renderList(FAMILY_DATA.slice(6, 11), 'list-anak-2');
+                initSearch();
+            }
+            document.getElementById('zoom-container').style.transform = `scale(${scale})`;
+        };
+    </script>
+</body>
+</html>
