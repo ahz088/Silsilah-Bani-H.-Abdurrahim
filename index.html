@@ -91,7 +91,6 @@
             cursor: pointer;
         }
 
-        /* --- STYLE UNTUK POP-UP (MODAL) --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 5000;
@@ -221,7 +220,7 @@
     <div class="viewport" id="mainViewport">
         <div id="zoom-container">
             <div class="leluhur-wrapper">
-                <div class="person" style="border: 4px solid var(--rmd-gold); width: 280px;">
+                <div class="person" style="border: 4px solid var(--rmd-gold); width: 280px; margin-bottom: 50px;">
                     <div class="name-txt" style="font-size: 1.2rem;">H. Abdurrahim & Hj. Rokmah</div>
                     <div class="desc-txt">Leluhur Utama (Generasi 1)</div>
                 </div>
@@ -244,13 +243,8 @@
         let textIndex = 0;
         const welcomeText = "Selamat datang di website silsilah bani H. Abdurrahim yang dibuat oleh Ahza Aqila Hammadi, remaja asal Karawang, anak dari Kusmawati, Cucu dari Mih Atoh.";
 
-        // --- FUNGSI MODAL ---
-        function openModal() {
-            document.getElementById('imageModal').style.display = 'flex';
-        }
-        function closeModal() {
-            document.getElementById('imageModal').style.display = 'none';
-        }
+        function openModal() { document.getElementById('imageModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
 
         function typeWriter() {
             if (textIndex < welcomeText.length) {
@@ -265,7 +259,10 @@
         function closeWelcome() {
             const s = document.getElementById('ramadhanSong');
             const btn = document.getElementById('musicToggle');
-            s.play().then(() => { btn.classList.add('spinning'); }).catch(() => {});
+            // Penanganan error autoplay browser
+            s.play().then(() => { 
+                btn.classList.add('spinning'); 
+            }).catch(e => console.log("Audio play prevented by browser"));
             document.getElementById('welcome-overlay').style.display = "none";
         }
 
@@ -299,18 +296,16 @@
 
                 if (query.length >= 2) {
                     for (let p of allPersons) {
-                        const name = p.innerText.toLowerCase();
-                        if (name.includes(query)) {
+                        if (p.innerText.toLowerCase().includes(query)) {
                             const isPage1 = p.closest('#page1');
                             const isPage2 = p.closest('#page2');
-
                             if (isPage1) switchPage(1);
                             if (isPage2) switchPage(2);
-
+                            
                             setTimeout(() => {
                                 p.classList.add('highlight-found');
                                 p.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }, 150);
+                            }, 100);
                             break; 
                         }
                     }
@@ -318,22 +313,21 @@
             });
         }
 
+        // Perbaikan: Menggunakan string template yang lebih aman
         function renderList(data, targetId) {
             const container = document.getElementById(targetId);
-            container.innerHTML = "";
-            data.forEach(anak => {
-                const row = document.createElement('div');
-                row.className = 'child-row';
-                row.innerHTML = `
+            if(!container) return;
+            container.innerHTML = data.map(anak => `
+                <div class="child-row">
                     <div class="person">
                         <div class="name-txt">${anak.nama}</div>
                         <div class="desc-txt">${anak.keterangan || ''}</div>
                     </div>
                     <div style="display:flex; margin-left:40px;">
                         ${anak.cucu ? renderCucu(anak.cucu) : ''}
-                    </div>`;
-                container.appendChild(row);
-            });
+                    </div>
+                </div>
+            `).join('');
         }
 
         function renderCucu(cucuList) {
@@ -352,15 +346,24 @@
                 </div>`).join('');
         }
 
-        window.onload = () => {
+        // PERBAIKAN UTAMA: Tunggu sampai DOM dan Data siap
+        window.addEventListener('DOMContentLoaded', () => {
             typeWriter();
-            if (typeof FAMILY_DATA !== 'undefined') {
-                renderList(FAMILY_DATA.slice(0, 6), 'list-anak-1');
-                renderList(FAMILY_DATA.slice(6, 11), 'list-anak-2');
-                initSearch();
-            }
+            
+            // Cek data secara berkala (max 3 detik)
+            let checkData = setInterval(() => {
+                if (typeof FAMILY_DATA !== 'undefined') {
+                    renderList(FAMILY_DATA.slice(0, 6), 'list-anak-1');
+                    renderList(FAMILY_DATA.slice(6, 11), 'list-anak-2');
+                    initSearch();
+                    clearInterval(checkData);
+                }
+            }, 100);
+            
+            setTimeout(() => clearInterval(checkData), 3000);
+
             document.getElementById('zoom-container').style.transform = `scale(${scale})`;
-        };
+        });
     </script>
 </body>
 </html>
